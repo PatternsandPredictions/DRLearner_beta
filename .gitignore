@@ -1,0 +1,11 @@
+.idea/
+**/__pycache__/
+
+venv/
+
+checkpoints/
+scratch/
+experiments/
+
+*.json
+roms/
