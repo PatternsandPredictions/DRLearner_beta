@@ -145,6 +145,19 @@ python update_tb.py <experiment name>/ <path to save>
 since Vertex AI silently restarts the workers which are down,
 and they start writing logs in tf file from scratch !
 
+### GCP Hardware Specs
+The hardware requirements for running DRLearner on Vertex AI are specified in `drlearner/configs/resources/` - there are two setups: for easy environment (i.e. Atari Boxing) and a more complex one (i.e. Atari Montezuma Revenge). See the table below.
+
+
+|               |                Simple   env                |                   Complex env                |
+|---------------|:------------------------------------------:|---------------------------------------------:|
+| Actor         |       e2-standard-4 (4 CPU, 16 RAM)        |                e2-standard-4 (4 CPU, 16 RAM) |
+| Learner       | n1-standard-4 (4 CPU, 16 RAM + TESLA P100) | n1-highmem-16 (16 CPU, 104 RAM + TESLA P100) |
+| Replay Buffer |        e2-highmem-8 (8 CPU, 64 RAM)        |              e2-highmem-16 (16 CPU, 128 RAM) |
+
+New configurations can be added using the same xm_docker.DockerConfig and xm.JobRequirements classes. Available for use on Vertex AI machine types are listed here https://cloud.google.com/vertex-ai/pricing.
+But it might require adding the new machine names to `external/vertex.py` i.e.  `'n2-standard-64': (64, 256 * xm.GiB),`.
+
 
 
 ### GCP Troubleshooting

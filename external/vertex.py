@@ -37,8 +37,7 @@ from xmanager.xm_local import executors as local_executors
 from xmanager.xm_local import status as local_status
 
 _DEFAULT_LOCATION = 'us-central1'
-# The only machines available on AI Platform are N1 machines.
-# https://cloud.google.com/ai-platform-unified/docs/predictions/machine-types#machine_type_comparison
+
 # TODO: Add machines that support A100.
 # TODO: Move lookup to a canonical place.
 _MACHINE_TYPE_TO_CPU_RAM = {
