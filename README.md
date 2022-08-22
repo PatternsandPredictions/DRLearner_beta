@@ -66,6 +66,12 @@ ale-import-roms roms/
 ```
 python ./examples/run_atari.py --level PongNoFrameskip-v4 --num_episodes 1000 --exp_path experiments/test_pong/
 ```
+Output in the terminal like this 
+
+`[Learner] Action Mean Time = 0.015 | Env Step Mean Time = 0.005 | Episode Length = 825 | Episode Return = -21.0 | Episodes = 1 | Observe Mean Time = 0.016 | Steps = 825 | Steps Per Second = 24.269` 
+
+means that the training has been launched successfully.
+
 Available environments:
  - Lunar Lander
  - Atari
