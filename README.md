@@ -1,7 +1,20 @@
 # DRLearner
 Open Source Deep Reinforcement Learning, based on Agent 57 (Badia et al, 2020).
+## Preparation
+
+Hardware and cloud infrastructure used for DRLearner testing are listed below. For more information on specific configurations for running experiments, see GCP Hardware Specs and Running Experiments at the bottom of this document.
+
+| Google Cloud Configuration	| Local Configuration |
+| --- | --- |
+| (GCP)	| (Local) |
+| Tested on Ubuntu 20.4 with Python3.7	| Tested on Ubuntu 22.04 with python3.10 |
+| Hardware: NVIDIA Tesla, 500 Gb drive 	| Hardware: 8-core i7 |
+
+Depending on exact OS and hardware, packages such as git, Python3.7, Anaconda/Miniconda or gcc. 
+
 ## Installation
-Tested on Ubuntu 20.4 with python3.7
+
+In a (GCP or local) Linux shell:
 
 Clone the repo
 ```
@@ -61,16 +74,16 @@ unrar e  Roms.rar roms/
 ale-import-roms roms/
 ```
 
-## Local training
+## Initial Training (Your best Pong score ever)
 
 ```
 python ./examples/run_atari.py --level PongNoFrameskip-v4 --num_episodes 1000 --exp_path experiments/test_pong/
 ```
-Output in the terminal like this 
+Correct terminal output like this means that the training has been launched successfully:
 
 `[Learner] Action Mean Time = 0.015 | Env Step Mean Time = 0.005 | Episode Length = 825 | Episode Return = -21.0 | Episodes = 1 | Observe Mean Time = 0.016 | Steps = 825 | Steps Per Second = 24.269` 
 
-means that the training has been launched successfully.
+The trainer may take up to several hours to run, depending on configuration.
 
 Available environments:
  - Lunar Lander
@@ -177,4 +190,8 @@ python ./examples/distrun_atari.py  --run_on_vertex --exp_path /gcs/$GOOGLE_CLOU
 ```
 - add `--noxm_build_image_locally` to build Docker images with Cloud Build, otherwise it will be built locally.
 - number of nodes running Actor code is `--num_actors_per_mixture` x `num_mixtures` - default number of mixtures for Atari is 32 - so be careful and don't launch the full-scale experiment before testing that everything works correctly.
+
+### Ongoing Support
+
+Join the [DRLearner Developers List](https://groups.google.com/g/drlearner?pli=10).
 
