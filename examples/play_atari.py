@@ -1,5 +1,3 @@
-"""Example running a trained DRLearner agent on Atari and recording its play."""
-
 import acme
 
 from absl import flags
@@ -9,16 +7,20 @@ from drlearner.drlearner import DRLearner, networks_zoo
 from drlearner.core.environment_loop import EnvironmentLoop
 from drlearner.environments.atari import make_environment
 from drlearner.configs.config_atari import AtariDRLearnerConfig
-from drlearner.utils.utils import make_tf_logger
+from drlearner.utils.utils import make_wandb_logger
 from drlearner.core.observers import StorageVideoObserver
 
-flags.DEFINE_string('level', 'BoxingNoFrameskip-v4', 'Which game to play.')
-flags.DEFINE_integer('seed', 42, 'Random seed.')
+flags.DEFINE_string('level', 'ALE/MontezumaRevenge-v5', 'Which game to play.')
+flags.DEFINE_integer('seed', 11, 'Random seed.')
 flags.DEFINE_integer('num_episodes', 100, 'Number of episodes to train for.')
-flags.DEFINE_string('exp_path', 'experiments/atari_distributed', 'Run name.')
-flags.DEFINE_string('checkpoint_path', 'experiments/atari_distributed', 'Path to dir where checkpoints/ are')
+flags.DEFINE_string('exp_path', 'experiments/play1', 'Run name.')
+flags.DEFINE_string('exp_name', 'atari play', 'Run name.')
+flags.DEFINE_string(
+    'checkpoint_path', 'experiments/mon_24cores1', 'Path to checkpoints/ dir')
 
 FLAGS = flags.FLAGS
+
+# TODo: add possibility to freeze mixture index for final evaluation
 
 
 def load_and_evaluate(_):
@@ -44,11 +46,13 @@ def load_and_evaluate(_):
         seed=FLAGS.seed,
         workdir=FLAGS.checkpoint_path
     )
-
+    
     observers = [StorageVideoObserver(config)]
-    logger = make_tf_logger(FLAGS.exp_path, label='evaluator')
+    logger = make_wandb_logger(
+        FLAGS.exp_path, label='evaluator', hyperparams=config, exp_name=FLAGS.exp_name)
 
-    loop = EnvironmentLoop(env, agent, logger=logger, observers=observers, should_update=False)
+    loop = EnvironmentLoop(env, agent, logger=logger,
+                           observers=observers, should_update=False)
     loop.run(FLAGS.num_episodes)
 
 

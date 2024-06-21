@@ -90,6 +90,8 @@ class LocalLayout(agent.Agent):
     def _is_reverb_queue(reverb_table: reverb.Table,
                          reverb_client: reverb.Client) -> bool:
       """Returns True iff the Reverb Table is actually a queue."""
+      # TODO(sinopalnikov): make it more generic and check for a table that
+      # needs special handling on update.
       info = reverb_client.server_info()
       table_info = info[reverb_table.name]
       is_queue = (
@@ -140,6 +142,8 @@ class LocalLayout(agent.Agent):
       def custom_update():
         should_update_actor = False
         # Run a number of learner steps (usually gradient steps).
+        # TODO(raveman): This is wrong. When running multi-level learners,
+        # different levels might have different batch sizes. Find a solution.
         while all(table.can_sample(batch_size) for table in replay_tables):
           learner.step()
           should_update_actor = True

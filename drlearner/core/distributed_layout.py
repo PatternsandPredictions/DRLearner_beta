@@ -13,10 +13,12 @@ from acme.utils import counting
 from acme.utils import loggers
 from acme.utils import lp_utils
 from acme.utils import observers as observers_lib
+from acme.utils import signals
 import dm_env
 import jax
 import launchpad as lp
 import reverb
+import time 
 
 from .environment_loop import EnvironmentLoop
 
@@ -88,6 +90,58 @@ def default_evaluator_factory(
     return evaluator
 
 
+class StepsEpisodesLimiter:
+  """Process that terminates an experiment when `max_steps` or `max_episodes` is reached."""
+
+  def __init__(self,
+               counter: counting.Counter,
+               max_steps: int,
+               max_episodes: int,
+               steps_key: str = 'actor_steps',
+               episodes_key: str = 'actor_episodes'
+               ):
+    self._counter = counter
+    self._max_steps = max_steps
+    self._max_episodes = max_episodes
+    self._steps_key = steps_key
+    self._episodes_key = episodes_key
+
+  def run(self):
+    """Run steps/episodes limiter to terminate an experiment when max_steps is reached.
+    """
+
+    logging.info('StepsEpisodesLimiter: Starting with max_steps = %d (%s)',
+                 self._max_steps, self._steps_key)
+    with signals.runtime_terminator():
+      while True:
+        # Update the counts.
+        counts = self._counter.get_counts()
+        num_steps = counts.get(self._steps_key, 0)
+        num_episodes = counts.get(self._episodes_key, 0)
+
+        logging.info('StepsEpisodesLimiter: Reached %d recorded steps in the %d episode', num_steps, num_episodes)
+
+        if num_steps > self._max_steps:
+          logging.info('StepsEpisodesLimiter: Max steps of %d was reached, terminating',
+                       self._max_steps)
+          # Avoid importing Launchpad until it is actually used.
+          import launchpad as lp  # pylint: disable=g-import-not-at-top
+          lp.stop()
+        
+        if num_episodes > self._max_episodes:
+          logging.info('StepsEpisodesLimiter: Max episodes of %d was reached, terminating',
+                       self._max_episodes)
+          # Avoid importing Launchpad until it is actually used.
+          import launchpad as lp  # pylint: disable=g-import-not-at-top
+          lp.stop()
+        
+        # Don't spam the counter.
+        for _ in range(10):
+          # Do not sleep for a long period of time to avoid LaunchPad program
+          # termination hangs (time.sleep is not interruptible).
+          time.sleep(1)
+
+
 @dataclasses.dataclass
 class CheckpointingConfig:
     """Configuration options for learner checkpointer."""
@@ -117,7 +171,10 @@ class DistributedLayout:
             device_prefetch: bool = True,
             prefetch_size: int = 1,
             log_to_bigtable: bool = False,
-            max_number_of_steps: Optional[int] = None,
+            # TODO: Refactor: `max_episodes` and `max_steps`` sould be defined on the experiment level,
+            #       not on the agent level, similarly to other experiment related abstractions
+            max_episodes: Optional[int] = None,
+            max_steps: Optional[int] = None,
             observers: Sequence[observers_lib.EnvLoopObserver] = (),
             multithreading_colocate_learner_and_reverb: bool = False,
             checkpointing_config: Optional[CheckpointingConfig] = None):
@@ -137,7 +194,8 @@ class DistributedLayout:
         self._device_prefetch = device_prefetch
         self._log_to_bigtable = log_to_bigtable
         self._prefetch_size = prefetch_size
-        self._max_number_of_steps = max_number_of_steps
+        self._max_episodes = max_episodes
+        self._max_steps = max_steps
         self._actor_logger_fn = actor_logger_fn
         self._evaluator_factories = evaluator_factories
         self._observers = observers
@@ -235,8 +293,8 @@ class DistributedLayout:
         return EnvironmentLoop(environment, actor, counter,
                                logger, observers=self._observers)
 
-    def coordinator(self, counter: counting.Counter, max_actor_steps: int):
-        return lp_utils.StepsLimiter(counter, max_actor_steps)
+    def coordinator(self, counter: counting.Counter, max_steps: int, max_episodes: int):
+        return StepsEpisodesLimiter(counter, max_steps, max_episodes)
 
     def build(self, name='agent', program: Optional[lp.Program] = None):
         """Build the distributed agent topology."""
@@ -254,10 +312,11 @@ class DistributedLayout:
 
         with program.group('counter'):
             counter = program.add_node(lp.CourierNode(self.counter))
-            if self._max_number_of_steps is not None:
-                _ = program.add_node(
-                    lp.CourierNode(self.coordinator, counter,
-                                   self._max_number_of_steps))
+            if self._max_steps and self._max_episodes:
+                program.add_node(
+                    lp.CourierNode(
+                        self.coordinator, counter,
+                        self._max_steps, self._max_episodes))
 
         learner_key, key = jax.random.split(key)
         learner_node = lp.CourierNode(self.learner, learner_key, replay, counter)

@@ -6,9 +6,9 @@ from skvideo import io
 import numpy as np
 import tensorflow as tf
 import dm_env
-from lazydict import LazyDictionary
 
 from drlearner.core.loggers import ImageLogger
+from drlearner.core.observers.lazy_dict import LazyDictionary
 
 
 class VideoObserver(ABC):

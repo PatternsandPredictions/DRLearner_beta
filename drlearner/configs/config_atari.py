@@ -68,5 +68,13 @@ AtariDRLearnerConfig = DRLearnerConfig(
     n_arms=32,
     actor_mc_epsilon=0.3,
     evaluation_mc_epsilon=0.01,
-    mc_beta=1.
+    mc_beta=1.,
+
+    # Agent video logging options
+    env_library='gym',
+    video_log_period=50,
+    actions_log_period=1,
+    logs_dir='experiments/videos/',
+    num_episodes=50,
+
     )

@@ -8,6 +8,7 @@ class ActionProbObserver:
         self._action_counter = None
 
     def observe_first(self, *args, **kwargs) -> None:
+        # todo: defaultdict
         self._action_counter = {i: 0 for i in range(self._num_actions)}
 
     def observe(self, *args, **kwargs) -> None:

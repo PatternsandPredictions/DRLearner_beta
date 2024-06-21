@@ -25,8 +25,9 @@ class DRLearner(local_layout.LocalLayout):
             seed: int,
             workdir: Optional[str] = '~/acme',
             counter: Optional[counting.Counter] = None,
+            logger=None
     ):
-        ngu_builder = DRLearnerBuilder(networks, config, num_actors_per_mixture=1)
+        ngu_builder = DRLearnerBuilder(networks, config, num_actors_per_mixture=1,logger=logger)
         super().__init__(
             seed=seed,
             environment_spec=spec,

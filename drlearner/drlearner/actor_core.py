@@ -44,6 +44,7 @@ def get_actor_core(
     def select_action(params: DRLearnerNetworksParams,
                       observation: networks_lib.Observation,
                       state: DRLearnerActorState):
+        # TODO(b/161332815): Make JAX Actor work with batched or unbatched inputs.
         rng, policy_rng = jax.random.split(state.rng)
         intrinsic_params = params.intrinsic_uvfa_params
         extrinsic_params = params.extrinsic_uvfa_params
@@ -198,7 +199,8 @@ def get_actor_core(
                       state: DRLearnerActorState) -> DRLearnerActorState:
         state = update_meta_controller(params, timestep, state)
         if jit:
-            return jax.jit(compute_intrinsic_reward)(params, timestep, state)
+            # Fix for jit compatibility.
+            return jax.jit(compute_intrinsic_reward, device=jax.devices('cpu')[0])(params, timestep, state)
         else:
             return compute_intrinsic_reward(params, timestep, state)
 
