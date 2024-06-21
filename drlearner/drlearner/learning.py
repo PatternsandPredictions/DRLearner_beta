@@ -86,7 +86,7 @@ class DRLearnerLearner(acme.Learner):
             # Get core state & warm it up on observations for a burn-in period.
             if use_core_state:
                 # Replay core state.
-                online_state = jax.tree_map(lambda x: x[0], data.extras[core_state_extraction_name])
+                online_state = jax.tree_util.tree_map(lambda x: x[0], data.extras[core_state_extraction_name])
             else:
                 online_state = uvfa_initial_state
             target_state = online_state
@@ -96,9 +96,9 @@ class DRLearnerLearner(acme.Learner):
                 key_grad, key1, key2 = jax.random.split(key_grad, 3)
 
                 burn_in_input = UVFANetworkInput(
-                    oar=jax.tree_map(lambda x: x[1:burn_in_length + 1], data.observation),  # x_t, r_tm1, a_tm1
-                    intrinsic_reward=jax.tree_map(lambda x: x[:burn_in_length], data.extras['intrinsic_reward']),
-                    mixture_idx=jax.tree_map(lambda x: x[:burn_in_length], data.extras['mixture_idx'])
+                    oar=jax.tree_util.tree_map(lambda x: x[1:burn_in_length + 1], data.observation),  # x_t, r_tm1, a_tm1
+                    intrinsic_reward=jax.tree_util.tree_map(lambda x: x[:burn_in_length], data.extras['intrinsic_reward']),
+                    mixture_idx=jax.tree_util.tree_map(lambda x: x[:burn_in_length], data.extras['mixture_idx'])
                 )
 
                 _, online_state = uvfa_unroll.apply(uvfa_params, key1, burn_in_input, online_state)
@@ -106,22 +106,22 @@ class DRLearnerLearner(acme.Learner):
                                                     target_state)
 
                 # Only get data to learn on from after the end of the burn in period.
-                data = jax.tree_map(lambda seq: seq[burn_in_length:], data)
+                data = jax.tree_util.tree_map(lambda seq: seq[burn_in_length:], data)
 
             # Unroll on sequences to get online and target Q-Values.
             key1, key2 = jax.random.split(key_grad)
 
             # extract data from nested structure
-            observations_t = jax.tree_map(lambda x: x[1:], data.observation)  # x_t, r_tm1, a_tm1
-            done_t = jax.tree_map(lambda x: x[1:], data.discount)  # 1 if not end of episode, 0 - end of episode
-            mixture_idx_t = jax.tree_map(lambda x: x[1:], data.extras['mixture_idx'])
-            actions_t = jax.tree_map(lambda x: x[1:], data.action)
-            mu_t = jax.tree_map(lambda x: x[1:], data.extras['behavior_action_prob'])
+            observations_t = jax.tree_util.tree_map(lambda x: x[1:], data.observation)  # x_t, r_tm1, a_tm1
+            done_t = jax.tree_util.tree_map(lambda x: x[1:], data.discount)  # 1 if not end of episode, 0 - end of episode
+            mixture_idx_t = jax.tree_util.tree_map(lambda x: x[1:], data.extras['mixture_idx'])
+            actions_t = jax.tree_util.tree_map(lambda x: x[1:], data.action)
+            mu_t = jax.tree_util.tree_map(lambda x: x[1:], data.extras['behavior_action_prob'])
 
             discount_t = get_gamma(mixture_idx_t, gamma_min, gamma_max, num_mixtures)
 
-            intrinsic_rewards_tm1 = jax.tree_map(lambda x: x[:-1], data.extras['intrinsic_reward'])
-            mixture_idx_tm1 = jax.tree_map(lambda x: x[:-1], data.extras['mixture_idx'])
+            intrinsic_rewards_tm1 = jax.tree_util.tree_map(lambda x: x[:-1], data.extras['intrinsic_reward'])
+            mixture_idx_tm1 = jax.tree_util.tree_map(lambda x: x[:-1], data.extras['mixture_idx'])
 
             # make q - network input
             network_input_t = UVFANetworkInput(
@@ -177,15 +177,15 @@ class DRLearnerLearner(acme.Learner):
         ) -> Tuple[jnp.ndarray, jnp.ndarray]:
             data = sample.data
 
-            observation_t = jax.tree_map(
+            observation_t = jax.tree_util.tree_map(
                 lambda x: x[:, 1:idm_clip_steps + 1],
                 data.observation
             )  # [B, T1, ...]
-            observation_tm1 = jax.tree_map(
+            observation_tm1 = jax.tree_util.tree_map(
                 lambda x: x[:, :idm_clip_steps],
                 data.observation
             )  # [B, T1, ...]
-            action_tm1 = jax.tree_map(
+            action_tm1 = jax.tree_util.tree_map(
                 lambda x: x[:, :idm_clip_steps],
                 data.action
             )
@@ -210,7 +210,7 @@ class DRLearnerLearner(acme.Learner):
             data = sample.data
             key1, key2 = jax.random.split(key_grad)
 
-            observation_t = jax.tree_map(
+            observation_t = jax.tree_util.tree_map(
                 lambda x: x[:, :distillation_clip_steps],
                 data.observation
             )  # [B, ...]
@@ -236,10 +236,10 @@ class DRLearnerLearner(acme.Learner):
             data = utils.batch_to_sequence(samples.data)
 
             # extract needed & preprocess data from structure
-            mixture_idx_t = jax.tree_map(lambda x: x[1:], data.extras['mixture_idx'])
+            mixture_idx_t = jax.tree_util.tree_map(lambda x: x[1:], data.extras['mixture_idx'])
             beta_t = get_beta(mixture_idx_t, beta_min, beta_max, num_mixtures)
-            intrinsic_rewards = jax.tree_map(lambda x: x[1:], data.extras['intrinsic_reward'])
-            extrinsic_rewards = jax.tree_map(lambda x: x[1:], data.reward)
+            intrinsic_rewards = jax.tree_util.tree_map(lambda x: x[1:], data.extras['intrinsic_reward'])
+            extrinsic_rewards = jax.tree_util.tree_map(lambda x: x[1:], data.reward)
             if clip_rewards:
                 extrinsic_rewards = jnp.clip(extrinsic_rewards, -max_abs_reward, max_abs_reward)
 
@@ -474,7 +474,7 @@ class DRLearnerLearner(acme.Learner):
 
     def save(self) -> TrainingState:
         # Serialize only the first replica of parameters and optimizer state.
-        return jax.tree_map(utils.get_from_first_device, self._state)
+        return jax.tree_util.tree_map(utils.get_from_first_device, self._state)
 
     def restore(self, state: TrainingState):
         self._state = utils.replicate_in_all_devices(state)

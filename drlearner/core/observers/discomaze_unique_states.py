@@ -65,6 +65,7 @@ class UniqueStatesDiscoMazeObserver:
             timestamp.observation.observation,
             color=MAZE_PATH_COLOR
         ).sum() + 1  # +1 for current position of agent
+        # TODO: account for states with targets if needed; currently support only 0 targets case
         self.reset(states_total)
 
     def observe(self, env: dm_env.Environment, timestep: dm_env.TimeStep,

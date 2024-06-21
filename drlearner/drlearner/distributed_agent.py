@@ -32,6 +32,10 @@ class DistributedDRLearnerFromConfig(distributed_layout.DistributedLayout):
             device_prefetch: bool = False,
             log_to_bigtable: bool = True,
             log_every: float = 10.0,
+            # TODO: Refactor: `max_episodes` and `max_steps`` sould be defined on the experiment level,
+            #       not on the agent level, similarly to other experiment related abstractions
+            max_episodes: Optional[int] = None,
+            max_steps: Optional[int] = None,
             evaluator_factories: Optional[Sequence[
                 distributed_layout.EvaluatorFactory]] = None,
             actor_observers=(),
@@ -48,7 +52,7 @@ class DistributedDRLearnerFromConfig(distributed_layout.DistributedLayout):
             networks=network_factory(environment_spec),
             config=config,
             num_actors_per_mixture=num_actors_per_mixture,
-            logger_fn=learner_logger_fn)
+            logger=learner_logger_fn)
         policy_network_factory = (
             lambda networks: make_policy_networks(networks, config))
         if evaluator_factories is None:
@@ -74,6 +78,8 @@ class DistributedDRLearnerFromConfig(distributed_layout.DistributedLayout):
             environment_spec=environment_spec,
             device_prefetch=device_prefetch,
             log_to_bigtable=log_to_bigtable,
+            max_episodes=max_episodes,
+            max_steps=max_steps,
             actor_logger_fn=distributed_layout.get_default_logger_fn(
                 log_to_bigtable, log_every),
             prefetch_size=config.prefetch_size,

@@ -1,6 +1,7 @@
 """DRLearner Builder."""
 from typing import Callable, Iterator, List, Optional
 from copy import deepcopy
+import functools
 
 import acme
 import jax
@@ -39,18 +40,18 @@ class DRLearnerBuilder(builders.ActorLearnerBuilder):
                  networks: DRLearnerNetworks,
                  config: DRLearnerConfig,
                  num_actors_per_mixture: int,
-                 logger_fn: Callable[[], loggers.Logger] = lambda: None, ):
+                 logger: Callable[[], loggers.Logger] = lambda: None, ):
         """Creates DRLearner learner, a behavior policy and an eval actor.
 
         Args:
           networks: DRLearner networks, used to build core state spec.
           config: a config with DRLearner hps
-          logger_fn: a logger factory for the learner
+          logger: a logger for the learner
         """
         self._networks = networks
         self._config = config
         self._num_actors_per_mixture = num_actors_per_mixture
-        self._logger_fn = logger_fn
+        self._logger_fn = logger
 
         # Sequence length for dataset iterator.
         self._sequence_length = (
@@ -71,6 +72,10 @@ class DRLearnerBuilder(builders.ActorLearnerBuilder):
             'extrinsic_core_state': extrinsic_core_state_spec
         }
 
+    def evaluate_logger(self):
+        if isinstance(self._logger_fn, functools.partial):
+            self._logger_fn=self._logger_fn()
+
     def make_learner(
             self,
             random_key: networks_lib.PRNGKey,
@@ -80,6 +85,7 @@ class DRLearnerBuilder(builders.ActorLearnerBuilder):
             counter: Optional[counting.Counter] = None,
     ) -> core.Learner:
         # The learner updates the parameters (and initializes them).
+        self.evaluate_logger()
         return DRLearnerLearner(
             uvfa_unroll=networks.uvfa_net.unroll,
             uvfa_initial_state=networks.uvfa_net.initial_state,
@@ -112,7 +118,7 @@ class DRLearnerBuilder(builders.ActorLearnerBuilder):
             max_abs_reward=self._config.max_absolute_reward,
             replay_client=replay_client,
             counter=counter,
-            logger=self._logger_fn())
+            logger=self._logger_fn)
 
     def make_replay_tables(
             self,
@@ -129,7 +135,7 @@ class DRLearnerBuilder(builders.ActorLearnerBuilder):
                 samples_per_insert=self._config.samples_per_insert,
                 error_buffer=error_buffer)
         else:
-            limiter = reverb.rate_limiters.MinSize(self._config.min_replay_size)
+            limiter = reverb.rate_limiters.MinSize(1)
 
         # add intrinsic rewards and mixture_idx (intrinsic reward beta) to extra_specs
         self._extra_spec['intrinsic_reward'] = specs.Array(

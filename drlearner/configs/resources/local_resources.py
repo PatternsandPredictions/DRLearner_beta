@@ -22,9 +22,9 @@ def get_local_resources():
                 ),
                 learner=local_multi_processing.PythonProcess(
                     env=dict(
-                        XLA_PYTHON_CLIENT_MEM_FRACTION='0.5',
-                        # CUDA_VISIBLE_DEVICES='-1',
-                        XLA_PYTHON_CLIENT_PREALLOCATE='false',
+                        # XLA_PYTHON_CLIENT_MEM_FRACTION='0.1',
+                        CUDA_VISIBLE_DEVICES='0',
+                        XLA_PYTHON_CLIENT_PREALLOCATE='0',
                         LD_LIBRARY_PATH=os.environ.get('LD_LIBRARY_PATH', '') + ':/usr/local/cuda/lib64'))
             )
     return local_resources

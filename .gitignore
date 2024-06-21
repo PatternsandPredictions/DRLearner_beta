@@ -9,3 +9,6 @@ experiments/
 
 *.json
 roms/
+wandb/
+.env
+.ipynb_checkpoints

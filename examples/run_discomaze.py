@@ -13,9 +13,11 @@ from drlearner.core.observers import UniqueStatesDiscoMazeObserver, IntrinsicRew
 from drlearner.environments.disco_maze import make_discomaze_environment
 from drlearner.utils.utils import make_tf_logger
 
-flags.DEFINE_integer('num_episodes', 1000, 'Number of episodes to train for.')
-flags.DEFINE_string('exp_path', 'experiments/default', 'Run name.')
-flags.DEFINE_integer('seed', 42, 'Random seed.')
+flags.DEFINE_integer('num_episodes', 100, 'Number of episodes to train for.')
+flags.DEFINE_string('exp_path', 'experiments/default',
+                    'Experiment data storage.')
+flags.DEFINE_string('exp_name', 'my first run', 'Run name.')
+flags.DEFINE_integer('seed', 0, 'Random seed.')
 
 FLAGS = flags.FLAGS
 
@@ -37,9 +39,7 @@ def main(_):
         env_spec,
         networks=networks,
         config=config,
-        seed=FLAGS.seed,
-        workdir=FLAGS.exp_path
-    )
+        seed=FLAGS.seed)
 
     logger = make_tf_logger(FLAGS.exp_path)
 
@@ -54,4 +54,3 @@ def main(_):
 
 if __name__ == '__main__':
     app.run(main)
-

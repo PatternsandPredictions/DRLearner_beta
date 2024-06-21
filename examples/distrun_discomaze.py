@@ -19,12 +19,18 @@ from drlearner.configs.resources import get_toy_env_vertex_resources, get_local_
 from drlearner.utils.utils import evaluator_factory_logger_choice, make_tf_logger
 
 flags.DEFINE_string('level', 'DiscoMaze', 'Which game to play.')
-flags.DEFINE_integer('num_episodes', 10000000, 'Number of episodes to train for.')
-flags.DEFINE_string('exp_path', 'experiments/discomaze_distributed', 'Run name.')
-flags.DEFINE_integer('seed', 42, 'Random seed.')
-flags.DEFINE_integer('num_actors_per_mixture', 1, 'Number of parallel actors per mixture.')
-flags.DEFINE_bool('run_on_vertex', False, 'Whether to run training in multiple processes or on Vertex AI.')
-flags.DEFINE_bool('colocate_learner_and_reverb', False, 'Flag indicating whether to colocate learner and reverb.')
+flags.DEFINE_integer('num_episodes', 10000000,
+                     'Number of episodes to train for.')
+flags.DEFINE_string('exp_path', 'experiments/default',
+                    'Experiment data storage.')
+flags.DEFINE_string('exp_name', 'my first run', 'Run name.')
+flags.DEFINE_integer('seed', 0, 'Random seed.')
+flags.DEFINE_integer('num_actors_per_mixture', 1,
+                     'Number of parallel actors per mixture.')
+flags.DEFINE_bool('run_on_vertex', False,
+                  'Whether to run training in multiple processes or on Vertex AI.')
+flags.DEFINE_bool('colocate_learner_and_reverb', False,
+                  'Flag indicating whether to colocate learner and reverb.')
 
 FLAGS = flags.FLAGS
 
@@ -33,7 +39,8 @@ def make_program():
     config = DiscomazeDRLearnerConfig
     print(config)
 
-    config_dir = os.path.join('experiments/', FLAGS.exp_path.strip('/').split('/')[-1])
+    config_dir = os.path.join(
+        'experiments/', FLAGS.exp_path.strip('/').split('/')[-1])
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
     with open(os.path.join(config_dir, 'config.txt'), 'w') as f:
@@ -80,7 +87,8 @@ def make_program():
             evaluator_factory_logger_choice(
                 environment_factory=make_discomaze_environment,
                 network_factory=net_factory,
-                policy_factory=lambda networks: make_policy_networks(networks, config, evaluation=True),
+                policy_factory=lambda networks: make_policy_networks(
+                    networks, config, evaluation=True),
                 logger_fn=evaluator_logger_fn,
                 observers=observers
             )

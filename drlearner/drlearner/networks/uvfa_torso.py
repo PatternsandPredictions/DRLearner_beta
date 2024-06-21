@@ -1,12 +1,11 @@
 import haiku as hk
 import jax
 import jax.numpy as jnp
-from acme.jax import networks as networks_lib
 
 
 class UVFATorso(hk.Module):
     def __init__(self,
-                 observation_embedding_torso: networks_lib.base.Module,
+                 observation_embedding_torso: hk.Module,
                  num_actions: int,
                  num_mixtures: int,
                  name: str):

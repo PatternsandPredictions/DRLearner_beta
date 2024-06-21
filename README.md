@@ -1,6 +1,19 @@
+<!-- TOC --><a name="drlearner"></a>
 # DRLearner
-Open Source Deep Reinforcement Learning, based on Agent 57 (Badia et al, 2020).
-## Preparation
+Open Source Deep Reinforcement Learning library, based on Agent 57 (Badia et al, 2020).
+We recommend reading this documentation [page](docs/DRLearner_notes.md) to get the essence of DRLearner. 
+
+# Table of content
+- [DRLearner](#drlearner)
+- [Table of content](#table-of-content)
+  - [System Requirements](#system-requirements)
+  - [Installation](#installation)
+  - [Running DRLearner Agent](#running-drlearner-agent)
+  - [Documentation](#documentation)
+  - [Ongoing Support](#ongoing-support)
+
+<!-- TOC --><a name="system-requirements"></a>
+## System Requirements
 
 Hardware and cloud infrastructure used for DRLearner testing are listed below. For more information on specific configurations for running experiments, see GCP Hardware Specs and Running Experiments at the bottom of this document.
 
@@ -14,7 +27,8 @@ Depending on exact OS and hardware, packages such as git, Python3.7, Anaconda/Mi
 
 ## Installation
 
-In a (GCP or local) Linux shell:
+We recommend [Docker-based](docs/docker.md) installation, however for installation from scratch follow the instructions:
+
 
 Clone the repo
 ```
@@ -28,13 +42,15 @@ sudo apt-get update
 sudo apt-get install xvfb
 ```
 
-## Creating environment
-### Conda
+### Creating environment
 
+#### Conda
+
+Restarting enviroment after creating and activating it is recommended to make sure that enviromental variables got updated.
 ```
 sudo apt-get update
-sudo apt-get install libpython3.7 ffmpeg swig
-conda create --name drlearner python=3.7
+sudo apt-get install libpython3.10 ffmpeg swig
+conda create --name drlearner python=3.10
 conda activate drlearner
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:lib:/usr/lib:/usr/local/lib:~/anaconda3/envs/drlearner/lib
@@ -48,150 +64,93 @@ Install packages
 pip install --no-cache-dir -r requirements.txt
 pip install git+https://github.com/ivannz/gymDiscoMaze.git@stable
 ```
-### Venv
+
+#### Venv
 ```
 sudo apt-get update
-sudo apt-get install libpython3.7 swig ffmpeg -y
-python3 -m venv venv
+sudo apt-get install libpython3.10 swig ffmpeg -y
+python3.10 -m venv venv
 source venv/bin/activate
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:lib:/usr/lib:/usr/local/lib:~/anaconda3/envs/drlearner/lib
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 ```
 
 Install packages
 ```
-pip install --upgrade pip setuptools wheel
 pip install --no-cache-dir -r requirements.txt
 pip install git+https://github.com/ivannz/gymDiscoMaze.git@stable
 ```
 
-### Get binary files for Atari games:
+### Binary files for Atari games
 ```
 sudo apt-get install unrar
 wget http://www.atarimania.com/roms/Roms.rar
 unrar e  Roms.rar roms/
 ale-import-roms roms/
-```
-
-## Initial Training (Your best Pong score ever)
 
 ```
-python ./examples/run_atari.py --level PongNoFrameskip-v4 --num_episodes 1000 --exp_path experiments/test_pong/
+
+## Running DRLearner Agent
+
+DRLearner comes with the following available environments:
+ - Lunar Lander:
+   - [Config](drlearner/configs/config_lunar_lander.py)
+   - [Synchronous Agent](examples/run_lunar_lander.py)
+   - [Asynchronos Agent](examples/distrun_lunar_lander.py)
+ - Atari:
+   - [Config](drlearner/configs/config_atari.py)
+   - [Synchronous Agent](examples/run_atari.py)
+   - [Asynchronos Agent](examples/distrun_atari.py)
+   - [Example](docs/atari_pong.md)
+ - Disco Maze
+   - [Config](drlearner/configs/config_discomaze.py)
+   - [Synchronous Agent](examples/run_discomaze.py)
+   - [Asynchronos Agent](examples/distrun_discomaze.py)
+
+### Lunar Lander example
+
+#### Training
+```
+python ./examples/run_lunar_lander.py --num_episodes 1000 --exp_path experiments/test_pong/ --exp_name my_first_experiment 
 ```
 Correct terminal output like this means that the training has been launched successfully:
 
-`[Learner] Action Mean Time = 0.015 | Env Step Mean Time = 0.005 | Episode Length = 825 | Episode Return = -21.0 | Episodes = 1 | Observe Mean Time = 0.016 | Steps = 825 | Steps Per Second = 24.269` 
+`[Enviroment] Mean Distillation Alpha = 1.000 | Action Mean Time = 0.027 | Env Step Mean Time = 0.000 | Episode Length = 63 | Episode Return = -453.10748291015625 | Episodes = 1 | Intrinsic Rewards Mean = 2.422 | Intrinsic Rewards Sum = 155.000 | Observe Mean Time = 0.014 | Steps = 63 | Steps Per Second = 15.544
+[Actor] Idm Accuracy = 0.12812499701976776 | Idm Loss = 1.4282478094100952 | Rnd Loss = 0.07360860705375671 | Extrinsic Uvfa Loss = 36.87723159790039 | Intrinsic Uvfa Loss = 19.602252960205078 | Steps = 1 | Time Elapsed = 65.282
+` 
 
-The trainer may take up to several hours to run, depending on configuration.
+To specify which directory to save changes in please specify exp_path. If model already exists in exp_path it will be loaded and training will resume. 
+To name experiment in W&B please specify exp_name flag. 
 
-Available environments:
- - Lunar Lander
- - Atari
- - Disco Maze
+#### Observing Lunar Lander in action
+To visualize any enviroment all you have to do is pass an instance of StorageVideoObserver to the enviroment. You pass and instance of DRLearnerConfig to the observer. In the config you can define 
 
-Examples of local and distributed agents training on those environments can be found in `examples/` .
-
-## Distributed training on Vertex AI
-
-### Installation and set-up
-
-1. (Local) Install `gcloud`.
 ```
-sudo apt-get install apt-transport-https ca-certificates gnupg curl
+observers = [IntrinsicRewardObserver(), DistillationCoefObserver(),StorageVideoObserver(config)]
+loop = EnvironmentLoop(env, agent, logger=logger_env, observers=observers)
+loop.run(FLAGS.num_episodes)
+```
+![Alt text](docs/img/lunar_lander.png)
 
-echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-sudo apt-get update && sudo apt-get install google-cloud-sdk
- ```
+#### Training with checkpoints (Montezuma)
 
-2. (Local) Set up GCP project.
+Model will pick up from the moment it stopped in the previous training. Montezuma is the most difficult game so make sure you have enough computational power. Total number of actors is defined as number_of_actors_per_mixture*num_mixtures. If you will try to run too many actors your setup might break. If you have 16 cores of CPU we advice aroud 12 actors total.
+
 ```
-gcloud init # choose the existing project or create a new one
-export GCP_PROJECT=<GCP project ID>
-echo $GCP_PROJECT # make sure it's the DRLearner project
-conda env config vars set GCP_PROJECT=<GCP project ID> # optional
-```
-3. (Local) Authorise the use of GCP services by DRLearner.
-```
-gcloud auth application-default login # get credentials to allow DRLearner code calls to GC APIs
-export GOOGLE_APPLICATION_CREDENTIALS=/home/<user>/.config/gcloud/application_default_credentials.json
-conda env config vars set GOOGLE_APPLICATION_CREDENTIALS=/home/<user>/.config/gcloud/application_default_credentials.json # optional
-```
-4. (Local) Install and configure Docker.
-```
-sudo apt-get remove docker docker-engine docker.io containerd runc
-sudo apt-get update && sudo apt-get install lsb-release
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io
-  
-sudo groupadd docker
-sudo usermod -aG docker <user>
-  
-gcloud auth configure-docker
+python ./examples/distrun_atari.py  --exp_path artifacts/montezuma_base --exp_name montezuma_training
 ```
 
-5. (GCP console) Enable IAM, Enable Vertex AI, Enable Container Registry in `<GCP project ID>`.
+More examples of synchronous and distributed agents training within the environments can be found in `examples/` .
 
+## Documentation
+  - [Debugging and monitoring](docs/debug_and_monitor.md)
+  - [Docker installation](docs/docker.md)
+  - [Apptainer on Unity cluster](docs/unity.md)
+  - [Running on Vertex AI](docs/vertexai.md)
+  - [Running on AWS](docs/aws-setup.md)
 
-6. (GCP console) Set up a xmanager service account.
-- Create xmanager service account in `IAM & Admin/Service accounts` .
-- Add 'Storage Admin', 'Vertex AI Administrator', 'Vertex AI User' , 'Service Account User' roles.
-
-7. Set up a Cloud storage bucket.
-- (GCP console) Create a Cloud storage bucket in Cloud Storage in `us-central1` region.
-- (Local) `export GOOGLE_CLOUD_BUCKET_NAME=<bucket name>`
-- (Local, optional) `conda env config vars set GOOGLE_CLOUD_BUCKET_NAME=<bucket name>`
-
-8. (Local) Replace `envs/drlearner/lib/python3.7/site-packages/launchpad/nodes/python/xm_docker.py` with `./external/xm_docker.py`  (to get the correct Docker instructions)*
-
-    *Can't rebuild launchpad package with those changes because the of complicated build process (requires Bazel...)
-
-
-9. (Local) Replace `envs/drlearner/lib/python3.7/site-packages/xmanager/cloud/vertex.py` with `./external/vertex.py` (to add new machine types, allow web access to nodes from GCP console).
-
-
-10. (Local) Tensorboard instructions:
-- Use scripts/update_tb.py to download current tfevents file which is saved in `<bucket name>`
-```
-python update_tb.py <experiment name>/ <path to save> 
-```
-! We recommend syncing tf files regularly and keeping older versions as well, 
-since Vertex AI silently restarts the workers which are down,
-and they start writing logs in tf file from scratch !
-
-### GCP Hardware Specs
-The hardware requirements for running DRLearner on Vertex AI are specified in `drlearner/configs/resources/` - there are two setups: for easy environment (i.e. Atari Boxing) and a more complex one (i.e. Atari Montezuma Revenge). See the table below.
-
-
-|               |                Simple   env                |                   Complex env                |
-|---------------|:------------------------------------------:|---------------------------------------------:|
-| Actor         |       e2-standard-4 (4 CPU, 16 RAM)        |                e2-standard-4 (4 CPU, 16 RAM) |
-| Learner       | n1-standard-4 (4 CPU, 16 RAM + TESLA P100) | n1-highmem-16 (16 CPU, 104 RAM + TESLA P100) |
-| Replay Buffer |        e2-highmem-8 (8 CPU, 64 RAM)        |              e2-highmem-16 (16 CPU, 128 RAM) |
-
-New configurations can be added using the same xm_docker.DockerConfig and xm.JobRequirements classes. Available for use on Vertex AI machine types are listed here https://cloud.google.com/vertex-ai/pricing.
-But it might require adding the new machine names to `external/vertex.py` i.e.  `'n2-standard-64': (64, 256 * xm.GiB),`.
-
-
-
-### GCP Troubleshooting
-In case of any 'Permission denied' issues, go to `IAM & Admin/` in GCP console and try adding 'Service Account User' role to your User, and
-'Compute Storage Admin' role to 'AI Platform Custom Code Service Agent' Service Account.
-
-
-### Running experiments
-```
-python ./examples/distrun_atari.py  --run_on_vertex --exp_path /gcs/$GOOGLE_CLOUD_BUCKET_NAME/test_pong/ --level PongNoFrameskip-v4 --num_actors_per_mixture 3
-```
-- add `--noxm_build_image_locally` to build Docker images with Cloud Build, otherwise it will be built locally.
-- number of nodes running Actor code is `--num_actors_per_mixture` x `num_mixtures` - default number of mixtures for Atari is 32 - so be careful and don't launch the full-scale experiment before testing that everything works correctly.
-
-### Ongoing Support
+## Ongoing Support
 
 Join the [DRLearner Developers List](https://groups.google.com/g/drlearner?pli=10).
 
