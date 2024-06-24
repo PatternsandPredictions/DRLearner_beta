@@ -1,9 +1,9 @@
 <!-- TOC --><a name="drlearner"></a>
 # DRLearner
-Open Source Deep Reinforcement Learning library, based on Agent 57 (Badia et al, 2020).
+Open Source Deep Reinforcement Learning (DRL) library, based on Agent 57 (Badia et al, 2020).
 We recommend reading this documentation [page](docs/DRLearner_notes.md) to get the essence of DRLearner. 
 
-# Table of content
+# Table of contents
 - [DRLearner](#drlearner)
 - [Table of content](#table-of-content)
   - [System Requirements](#system-requirements)
