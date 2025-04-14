@@ -47,7 +47,7 @@ gcloud auth configure-docker
 6. (GCP console) Set up a xmanager service account.
 - Create xmanager service account in `IAM & Admin/Service accounts` .
 - Add 'Storage Admin', 'Vertex AI Administrator', 'Vertex AI User' , 'Service Account User' roles.
-
+- If you will be building docker images on GCP and not locally, consider adding 'Cloud Build Editor' and 'Storage Object Viewer' roles as well
 7. Set up a Cloud storage bucket.
 - (GCP console) Create a Cloud storage bucket in Cloud Storage in `us-central1` region.
 - (Local) `export GOOGLE_CLOUD_BUCKET_NAME=<bucket name>`
@@ -89,7 +89,7 @@ In case of any 'Permission denied' issues, go to `IAM & Admin/` in GCP console a
 
 ## Running experiments
 ```
-python ./examples/distrun_atari.py  --run_on_vertex --exp_path /gcs/$GOOGLE_CLOUD_BUCKET_NAME/test_pong/ --level PongNoFrameskip-v4 --num_actors_per_mixture 3
+python ./examples/distrun_atari.py  --run_on_vertex --exp_path /gcs/$GOOGLE_CLOUD_BUCKET_NAME/test_pong/ --level PongNoFrameskip-v4 --num_actors_per_mixture 3 --colocate_learner_and_reverb=false
 ```
 - add `--noxm_build_image_locally` to build Docker images with Cloud Build, otherwise it will be built locally.
 - number of nodes running Actor code is `--num_actors_per_mixture` x `num_mixtures` - default number of mixtures for Atari is 32 - so be careful and don't launch the full-scale experiment before testing that everything works correctly.

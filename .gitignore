@@ -8,6 +8,7 @@ scratch/
 experiments/
 
 *.json
+!.devcontainer/**
 roms/
 wandb/
 .env

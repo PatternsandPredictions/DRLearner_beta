@@ -5,7 +5,7 @@ from acme.adders import reverb as adders_reverb
 AtariDRLearnerConfig = DRLearnerConfig(
     gamma_min=0.99,
     gamma_max=0.997,
-    num_mixtures=32,
+    num_mixtures=2,#32,
     target_update_period=400,
     evaluation_epsilon=0.01,
     actor_epsilon=0.4,

@@ -1,0 +1,43 @@
+{
+    "name": "DRLearner",
+	"build": {
+		"dockerfile": "python3.10.Dockerfile",
+		"args": {
+			"VARIANT": "ubuntu22.04",
+			"CUDA_VERSION": "11.8.0-cudnn8",
+			"USERNAME": "${localEnv:USERNAME}",
+			"USER_UID": "1000",
+			"USER_GID": "1000",
+			"PROJDIR": "${containerWorkspaceFolder}"
+		},
+        "context": "${localWorkspaceFolder}"
+	},
+	"runArgs": [
+		"--gpus=all"
+	],
+	"postCreateCommand": "sudo rm -rf \"${containerWorkspaceFolder}/roms\" && sudo mv /tmp/roms \"${containerWorkspaceFolder}/roms\" && ale-import-roms \"${containerWorkspaceFolder}/roms\"",
+	"privileged": true,
+	"mounts": [
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+		"source=${localEnv:HOME}/.config/gcloud,target=/home/${localEnv:USERNAME}/.config/gcloud,type=bind",
+		"source=${localEnv:HOME}/.docker,target=/home/${localEnv:USERNAME}/.docker,type=bind",
+		"source=${localEnv:HOME}/.bash_history,target=/home/${localEnv:USERNAME}/.bash_history,type=bind"
+	],
+	"customizations": {
+		"vscode": {
+			"settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+				"python.defaultInterpreterPath": "/opt/venv/bin/python3.10"
+			},
+            "profiles": {
+                "bash": {
+                    "path": "/bin/bash"
+                }
+            },
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+                "ms-python.python"
+			]
+		}
+	}
+}
